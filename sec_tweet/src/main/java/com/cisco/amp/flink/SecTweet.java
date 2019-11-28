@@ -22,6 +22,7 @@ import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.streaming.api.datastream.DataStream;
+import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.connectors.twitter.TwitterSource;
 import org.apache.flink.util.Collector;
@@ -33,6 +34,8 @@ import java.util.StringTokenizer;
 
 public class SecTweet {
 
+    private static final String PARAM_FILE_KEY = "file-source";
+
     // *************************************************************************
     // PROGRAM
     // *************************************************************************
@@ -43,18 +46,23 @@ public class SecTweet {
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         // Get input parameters
         final ParameterTool params = ParameterTool.fromArgs(args);
-        //
+
         env.setParallelism(params.getInt("parallelism", 1));
 
-        if (!(params.has(TwitterSource.CONSUMER_KEY) && params.has(TwitterSource.CONSUMER_SECRET)
-                && params.has(TwitterSource.TOKEN) && params.has(TwitterSource.TOKEN_SECRET))) {
-            System.out.println("Usage: --twitter-source.consumerKey <key> --twitter-source.consumerSecret <secret> "
-                    + "twitter-source.token <token> --twitter-source.tokenSecret <tokenSecret>");
-            return;
+        DataStreamSource<String> streamSource;
+        if (params.has(PARAM_FILE_KEY)) {
+            streamSource = env.readTextFile(params.get(PARAM_FILE_KEY));
+        } else {
+            if (!(params.has(TwitterSource.CONSUMER_KEY) && params.has(TwitterSource.CONSUMER_SECRET)
+                    && params.has(TwitterSource.TOKEN) && params.has(TwitterSource.TOKEN_SECRET))) {
+                System.out.println("Usage: --twitter-source.consumerKey <key> --twitter-source.consumerSecret <secret> "
+                        + "twitter-source.token <token> --twitter-source.tokenSecret <tokenSecret>");
+                return;
+            }
+            // Get input data
+            TwitterSource twitterSource = new TwitterSource(params.getProperties());
+            streamSource = env.addSource(twitterSource);
         }
-        // Get input data
-        TwitterSource twitterSource = new TwitterSource(params.getProperties());
-        DataStream<String> streamSource = env.addSource(twitterSource);
 
         DataStream<Tuple2<String, Integer>> tweets = streamSource
                 // selecting English tweets and splitting to (word, 1)
@@ -99,10 +107,8 @@ public class SecTweet {
                 jsonParser = new ObjectMapper();
             }
             JsonNode jsonNode = jsonParser.readValue(value, JsonNode.class);
-            boolean isEnglish = jsonNode.has("user") && jsonNode.get("user").has("lang")
-                    && jsonNode.get("user").get("lang").asText().equals("en");
             boolean hasText = jsonNode.has("text");
-            if (isEnglish && hasText) {
+            if (hasText) {
                 // message of tweet
                 StringTokenizer tokenizer = new StringTokenizer(jsonNode.get("text").asText());
 

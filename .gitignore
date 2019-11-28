@@ -1,5 +1,6 @@
 # Compiled class file
 *.class
+*/out
 
 # Log file
 *.log
@@ -21,5 +22,7 @@
 
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
+
 sec_tweet/gradlew.bat
 sec_tweet/build/*
+sec_tweet/.*
