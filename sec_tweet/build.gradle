@@ -11,15 +11,16 @@ plugins {
     id 'java'
     id 'application'
     // shadow plugin to produce fat JARs
-    id 'com.github.johnrengelman.shadow' version '2.0.4'
 }
 
 
 // artifact properties
 group = 'com.cisco.amp.flink'
 version = '0.1-SNAPSHOT'
-mainClassName = 'com.cisco.amp.flink.StreamingJob'
+mainClassName = 'com.cisco.amp.flink.SecTweet'
 description = """Flink Quickstart Job"""
+
+apply plugin: 'com.github.johnrengelman.shadow'
 
 ext {
     javaVersion = '1.8'
@@ -38,9 +39,6 @@ tasks.withType(JavaCompile) {
 
 applicationDefaultJvmArgs = ["-Dlog4j.configuration=log4j.properties"]
 
-task wrapper(type: Wrapper) {
-    gradleVersion = '3.1'
-}
 
 // declare where to find the dependencies of your project
 repositories {
@@ -69,7 +67,8 @@ dependencies {
     // --------------------------------------------------------------
     compile "org.apache.flink:flink-java:${flinkVersion}"
     compile "org.apache.flink:flink-streaming-java_${scalaBinaryVersion}:${flinkVersion}"
-
+    compile "org.apache.flink:flink-connector-twitter_${scalaBinaryVersion}:${flinkVersion}"
+    compile "commons-logging:commons-logging:1.2"
     // --------------------------------------------------------------
     // Dependencies that should be part of the shadow jar, e.g.
     // connectors. These must be in the flinkShadowJar configuration!
