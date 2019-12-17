@@ -8,6 +8,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.StringTokenizer;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
 public class TweetJsonMap implements FlatMapFunction<String, String> {
     private static final Logger LOGGER = LoggerFactory.getLogger(TweetJsonMap.class);
@@ -19,6 +21,7 @@ public class TweetJsonMap implements FlatMapFunction<String, String> {
         if (jsonParser == null) {
             jsonParser = new ObjectMapper();
         }
+
         try {
             JsonNode jsonNode = jsonParser.readValue(value, JsonNode.class);
             if (jsonNode.has("errors")) {
@@ -42,7 +45,9 @@ public class TweetJsonMap implements FlatMapFunction<String, String> {
     }
 
     private Boolean isInterestingToken(String token) {
-        //TODO: implement token checks
-        return true;
+        Pattern interestingPattern = Pattern.compile("[a-f0-9]{64}|.*(app.any.run|virustotal.com|github.com)\\/.*|^[a-z]:(\\\\|\\/\\/).*\\w+$|^\\/(\\w+\\/)+.*$", Pattern.CASE_INSENSITIVE);
+        Matcher interestingMatcher = interestingPattern.matcher(token);
+
+        return interestingMatcher.matches();
     }
 }
