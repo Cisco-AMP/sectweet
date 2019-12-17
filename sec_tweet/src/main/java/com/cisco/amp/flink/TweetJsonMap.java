@@ -37,7 +37,6 @@ public class TweetJsonMap implements FlatMapFunction<String, String> {
                         out.collect(result);
                     }
                 }
-                out.collect(tweetBody);
             }
         } catch (Exception exception) {
             LOGGER.error(exception.getMessage());
