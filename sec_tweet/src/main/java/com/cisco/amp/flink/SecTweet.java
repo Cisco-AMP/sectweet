@@ -18,25 +18,28 @@
 
 package com.cisco.amp.flink;
 
+import com.cisco.amp.flink.model.Tweet;
 import com.cisco.amp.flink.twitter.SecurityEndpointInitializer;
 import org.apache.flink.api.java.utils.ParameterTool;
+import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.connectors.twitter.TwitterSource;
 
 public class SecTweet {
-
     private static final String PARAM_FILE_KEY = "file-source";
+    private static final int MAX_LATENESS_SECONDS = 60;
 
     public static void main(String[] args) throws Exception {
-
         // set up the streaming environment
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         // Get input parameters
         final ParameterTool params = ParameterTool.fromArgs(args);
 
         env.setParallelism(params.getInt("parallelism", 1));
+        env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
 
         DataStreamSource<String> streamSource;
         if (params.has(PARAM_FILE_KEY)) {
@@ -54,9 +57,13 @@ public class SecTweet {
             streamSource = env.addSource(twitterSource);
         }
 
+        DataStream<Tweet> tweets = streamSource
+            .flatMap(new ExtractTweet())
+            .assignTimestampsAndWatermarks(new TweetTimestampExtractor(Time.seconds(MAX_LATENESS_SECONDS)));
 
-        DataStream<String> tweets = streamSource.flatMap(new TweetJsonMap());
-        tweets.print();
+        DataStream<String> tokens = tweets.flatMap(new TweetJsonMap());
+
+        tokens.print();
 
         env.execute("Sectweet");
     }

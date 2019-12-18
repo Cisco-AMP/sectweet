@@ -1,5 +1,6 @@
 package com.cisco.amp.flink;
 
+import com.cisco.amp.flink.model.Tweet;
 import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.JsonNode;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
@@ -11,31 +12,19 @@ import java.util.StringTokenizer;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
-public class TweetJsonMap implements FlatMapFunction<String, String> {
+public class TweetJsonMap implements FlatMapFunction<Tweet, String> {
     private static final Logger LOGGER = LoggerFactory.getLogger(TweetJsonMap.class);
 
-    private transient ObjectMapper jsonParser;
-
     @Override
-    public void flatMap(String value, Collector<String> out) {
-        if (jsonParser == null) {
-            jsonParser = new ObjectMapper();
-        }
-
+    public void flatMap(Tweet tweet, Collector<String> out) {
         try {
-            JsonNode jsonNode = jsonParser.readValue(value, JsonNode.class);
-            if (jsonNode.has("errors")) {
-                LOGGER.error("Twitter Error: " + value);
-            } else {
-                String tweetBody = jsonNode.get("text").asText();
-                StringTokenizer tokenizer = new StringTokenizer(tweetBody);
+            StringTokenizer tokenizer = new StringTokenizer(tweet.getBody());
 
-                // split the message
-                while (tokenizer.hasMoreTokens()) {
-                    String result = tokenizer.nextToken().replaceAll("\\s*", "").toLowerCase();
-                    if (!result.equals("") && isInterestingToken(result)) {
-                        out.collect(result);
-                    }
+            // split the message
+            while (tokenizer.hasMoreTokens()) {
+                String result = tokenizer.nextToken().replaceAll("\\s*", "").toLowerCase();
+                if (!result.equals("") && isInterestingToken(result)) {
+                    out.collect(result);
                 }
             }
         } catch (Exception exception) {
