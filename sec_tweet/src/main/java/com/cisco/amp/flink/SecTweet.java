@@ -65,10 +65,11 @@ public class SecTweet {
 
         DataStream<TokenCount> tokens = tweets.flatMap(new TweetJsonMap());
 
-        SlidingEventTimeWindows trendWindow = SlidingEventTimeWindows.of(Time.minutes(60), Time.minutes(5));
-        tokens.keyBy(t -> t.getToken()).window(trendWindow).reduce(new TweetCountReducer()).print();
+        SlidingEventTimeWindows trendWindow = SlidingEventTimeWindows.of(Time.hours(6), Time.minutes(30));
+        DataStream<TokenCount> tokenCountDataStream = tokens.keyBy(t -> t.getToken()).window(trendWindow).reduce(new TweetCountReducer());
 
-        tokens.print();
+        tokenCountDataStream.keyBy(t -> t.getToken()).window(trendWindow).aggregate(new TokenStateAggregator(5f)).print();
+
         env.execute("Sectweet");
     }
 }

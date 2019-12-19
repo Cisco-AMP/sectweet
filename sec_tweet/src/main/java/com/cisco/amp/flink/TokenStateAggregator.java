@@ -30,7 +30,6 @@ public class TokenStateAggregator implements AggregateFunction<TokenCount, Token
     public TokenTrend.State getResult(TokenTrend accumulator) {
         float expectedCount = new Float(accumulator.getCount()) / accumulator.getEntries();
         float percentageChange = (accumulator.getLastCount() - expectedCount) / expectedCount;
-        System.out.println(percentageChange);
         if (Math.abs(percentageChange) < equalityRange) {
             return TokenTrend.State.NO_CHANGE;
         } else if (percentageChange > 0) {

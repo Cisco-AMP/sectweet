@@ -46,5 +46,8 @@ public class TokenTrend {
         INCREASING, DECREASING, NO_CHANGE
     }
 
+    public String toString() {
+        return String.format("%s, %d, %d", getToken(), getCount(), getEntries());
+    }
 
 }

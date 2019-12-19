@@ -8,7 +8,6 @@ import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMap
 import org.apache.flink.util.Collector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sun.tools.jstat.Token;
 
 import java.util.StringTokenizer;
 import java.util.regex.Pattern;
