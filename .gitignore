@@ -26,3 +26,6 @@ hs_err_pid*
 sec_tweet/gradlew.bat
 sec_tweet/build/*
 sec_tweet/.*
+
+.idea/*
+.java-version

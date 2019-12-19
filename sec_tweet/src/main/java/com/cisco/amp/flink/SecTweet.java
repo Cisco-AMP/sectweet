@@ -18,6 +18,7 @@
 
 package com.cisco.amp.flink;
 
+import com.cisco.amp.flink.model.TokenCount;
 import com.cisco.amp.flink.model.Tweet;
 import com.cisco.amp.flink.twitter.SecurityEndpointInitializer;
 import org.apache.flink.api.java.utils.ParameterTool;
@@ -25,6 +26,7 @@ import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.windowing.assigners.SlidingEventTimeWindows;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.connectors.twitter.TwitterSource;
 
@@ -61,7 +63,10 @@ public class SecTweet {
             .flatMap(new ExtractTweet())
             .assignTimestampsAndWatermarks(new TweetTimestampExtractor(Time.seconds(MAX_LATENESS_SECONDS)));
 
-        DataStream<String> tokens = tweets.flatMap(new TweetJsonMap());
+        DataStream<TokenCount> tokens = tweets.flatMap(new TweetJsonMap());
+
+        SlidingEventTimeWindows trendWindow = SlidingEventTimeWindows.of(Time.minutes(60), Time.minutes(5));
+        tokens.keyBy(t -> t.getToken()).window(trendWindow).reduce(new TweetCountReducer()).print();
 
         tokens.print();
         env.execute("Sectweet");

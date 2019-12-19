@@ -4,6 +4,11 @@ public class TokenCount {
     private String token;
     private int count;
 
+    @Override
+    public String toString() {
+        return String.format("%s, %d", getToken(), getCount());
+    }
+
     public String getToken() {
         return token;
     }
