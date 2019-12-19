@@ -64,7 +64,6 @@ public class SecTweet {
         DataStream<String> tokens = tweets.flatMap(new TweetJsonMap());
 
         tokens.print();
-
         env.execute("Sectweet");
     }
 }
