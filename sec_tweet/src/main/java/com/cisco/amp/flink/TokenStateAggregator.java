@@ -2,9 +2,10 @@ package com.cisco.amp.flink;
 
 import com.cisco.amp.flink.model.TokenCount;
 import com.cisco.amp.flink.model.TokenTrend;
+import com.cisco.amp.flink.model.TokenTrendAccumulator;
 import org.apache.flink.api.common.functions.AggregateFunction;
 
-public class TokenStateAggregator implements AggregateFunction<TokenCount, TokenTrend, TokenTrend.State> {
+public class TokenStateAggregator implements AggregateFunction<TokenCount, TokenTrendAccumulator, TokenTrend> {
     private final float equalityRange;
 
     public TokenStateAggregator(float equalityRange) {
@@ -12,12 +13,12 @@ public class TokenStateAggregator implements AggregateFunction<TokenCount, Token
     }
 
     @Override
-    public TokenTrend createAccumulator() {
-        return new TokenTrend();
+    public TokenTrendAccumulator createAccumulator() {
+        return new TokenTrendAccumulator();
     }
 
     @Override
-    public TokenTrend add(TokenCount value, TokenTrend accumulator) {
+    public TokenTrendAccumulator add(TokenCount value, TokenTrendAccumulator accumulator) {
         if (accumulator.getToken() == null)
             accumulator.setToken(value.getToken());
         accumulator.setCount(accumulator.getCount() + value.getCount());
@@ -27,21 +28,24 @@ public class TokenStateAggregator implements AggregateFunction<TokenCount, Token
     }
 
     @Override
-    public TokenTrend.State getResult(TokenTrend accumulator) {
+    public TokenTrend getResult(TokenTrendAccumulator accumulator) {
+        if (accumulator.getEntries() == 1) {
+            return new TokenTrend(accumulator.getToken(), TokenTrend.State.INCREASING);
+        }
         float expectedCount = new Float(accumulator.getCount()) / accumulator.getEntries();
         float percentageChange = (accumulator.getLastCount() - expectedCount) / expectedCount;
         if (Math.abs(percentageChange) < equalityRange) {
-            return TokenTrend.State.NO_CHANGE;
+            return new TokenTrend(accumulator.getToken(), TokenTrend.State.NO_CHANGE);
         } else if (percentageChange > 0) {
-            return TokenTrend.State.INCREASING;
+            return new TokenTrend(accumulator.getToken(), TokenTrend.State.INCREASING);
         } else {
-            return TokenTrend.State.DECREASING;
+            return new TokenTrend(accumulator.getToken(), TokenTrend.State.DECREASING);
         }
     }
 
     @Override
-    public TokenTrend merge(TokenTrend a, TokenTrend b) {
-        TokenTrend mergedTrend = new TokenTrend();
+    public TokenTrendAccumulator merge(TokenTrendAccumulator a, TokenTrendAccumulator b) {
+        TokenTrendAccumulator mergedTrend = new TokenTrendAccumulator();
         mergedTrend.setToken(a.getToken());
         mergedTrend.setLastCount(a.getLastCount());
         mergedTrend.setEntries(a.getEntries() + b.getEntries());

@@ -80,6 +80,7 @@ dependencies {
 
     // Add test dependencies here.
     testCompile "junit:junit:4.12"
+    testCompile "org.apache.flink:flink-test-utils_${scalaBinaryVersion}:${flinkVersion}"
 }
 
 // make compileOnly dependencies available for tests:

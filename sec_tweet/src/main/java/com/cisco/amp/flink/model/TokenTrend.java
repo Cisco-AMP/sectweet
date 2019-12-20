@@ -2,11 +2,14 @@ package com.cisco.amp.flink.model;
 
 public class TokenTrend {
     private String token;
-    private int count = 0;
-    private int entries = 0;
-    private int lastCount = 0;
+    private State state;
 
-    public TokenTrend() {
+    // Required for Flink to use getters as keys
+    public TokenTrend(){}
+
+    public TokenTrend(String token, State state) {
+        this.token = token;
+        this.state = state;
     }
 
     public String getToken() {
@@ -17,28 +20,12 @@ public class TokenTrend {
         this.token = token;
     }
 
-    public int getCount() {
-        return count;
+    public State getState() {
+        return state;
     }
 
-    public void setCount(int count) {
-        this.count = count;
-    }
-
-    public int getEntries() {
-        return entries;
-    }
-
-    public void setEntries(int entries) {
-        this.entries = entries;
-    }
-
-    public int getLastCount() {
-        return lastCount;
-    }
-
-    public void setLastCount(int lastCount) {
-        this.lastCount = lastCount;
+    public void setState(State state) {
+        this.state = state;
     }
 
     public enum State
@@ -46,8 +33,9 @@ public class TokenTrend {
         INCREASING, DECREASING, NO_CHANGE
     }
 
+    @Override
     public String toString() {
-        return String.format("%s, %d, %d", getToken(), getCount(), getEntries());
+        return getToken() + ": " + getState();
     }
 
 }

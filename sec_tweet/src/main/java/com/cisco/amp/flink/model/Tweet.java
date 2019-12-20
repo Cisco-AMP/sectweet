@@ -16,6 +16,7 @@ public class Tweet {
             Tweet.getTimestamp(jsonNode.get("created_at").asText()),
             jsonNode.get("text").asText()
         );
+//        System.out.println(timestamp + ": " + body);
     }
 
     public Tweet(long timestamp, String body) {
@@ -33,6 +34,6 @@ public class Tweet {
 
     private static long getTimestamp(String timeString) {
         OffsetDateTime odtInstanceAtOffset = OffsetDateTime.parse(timeString, DATE_TIME_FORMATTER);
-        return odtInstanceAtOffset.toInstant().getEpochSecond();
+        return odtInstanceAtOffset.toInstant().getEpochSecond() * 1000;
     }
 }

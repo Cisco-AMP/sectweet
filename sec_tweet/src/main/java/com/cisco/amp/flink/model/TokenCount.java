@@ -4,6 +4,14 @@ public class TokenCount {
     private String token;
     private int count;
 
+    // Required for Flink to use getters as keys
+    public TokenCount() {}
+
+    public TokenCount(String token, int count) {
+        this.token = token;
+        this.count = count;
+    }
+
     @Override
     public String toString() {
         return String.format("%s, %d", getToken(), getCount());
@@ -11,11 +19,6 @@ public class TokenCount {
 
     public String getToken() {
         return token;
-    }
-
-    public TokenCount(String token, int count) {
-        this.token = token;
-        this.count = count;
     }
 
     public void setToken(String token) {
