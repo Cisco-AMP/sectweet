@@ -51,7 +51,8 @@ public class SecTweet {
     private static final String PARAM_FILE_KEY = "file-source";
     private static final int MAX_LATENESS_SECONDS = 60;
     private static final Time DEFAULT_RATE_INTERVAL = Time.minutes(15);
-    private static final int DEFAULT_WINDOW_SIZE = 3;
+    private static final int DEFAULT_TREND_WINDOW_SIZE = 5;
+    private static final int DEFAULT_TREND_WINDOW_SLIDE = 1;
     private static final float TREND_EQUALITY_RANGE = 0.01f;
 
     void writeToES(DataStream<TokenCount> tokenCountDataStream) {
@@ -99,7 +100,7 @@ public class SecTweet {
 
         DataStream<TokenCount> tokens = tweets.flatMap(new TweetJsonMap());
         DataStream<TokenCount> tokenCountDataStream = countTokens(tokens, DEFAULT_RATE_INTERVAL);
-        DataStream<TokenTrend> trendsDataStream = getTrends(tokenCountDataStream, DEFAULT_WINDOW_SIZE);
+        DataStream<TokenTrend> trendsDataStream = getTrends(tokenCountDataStream, DEFAULT_TREND_WINDOW_SIZE, DEFAULT_TREND_WINDOW_SLIDE);
 
         writeToES(tokenCountDataStream);
         trendsDataStream.print();
@@ -112,10 +113,10 @@ public class SecTweet {
         return tokenCountDataStream;
     }
 
-    DataStream<TokenTrend> getTrends(DataStream<TokenCount> dataStream, int windowSize) {
+    DataStream<TokenTrend> getTrends(DataStream<TokenCount> dataStream, int windowSize, int windowSlide) {
         DataStream<TokenTrend> tokenTrendDataStream = dataStream
             .keyBy("token")
-            .countWindow(windowSize)
+            .countWindow(windowSize, windowSlide)
             .aggregate(new TokenStateAggregator(TREND_EQUALITY_RANGE));
         return tokenTrendDataStream;
     }

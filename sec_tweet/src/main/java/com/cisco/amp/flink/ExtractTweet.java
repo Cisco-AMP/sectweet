@@ -22,7 +22,7 @@ public class ExtractTweet implements FlatMapFunction<String, Tweet> {
         if (jsonParser == null) {
             jsonParser = new ObjectMapper();
         }
-        
+
         try {
             JsonNode jsonNode = jsonParser.readValue(value, JsonNode.class);
             if (jsonNode.has("errors")) {

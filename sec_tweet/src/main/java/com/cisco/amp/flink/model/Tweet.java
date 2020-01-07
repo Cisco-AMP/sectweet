@@ -16,7 +16,6 @@ public class Tweet {
             Tweet.getTimestamp(jsonNode.get("created_at").asText()),
             jsonNode.get("text").asText()
         );
-//        System.out.println(timestamp + ": " + body);
     }
 
     public Tweet(long timestamp, String body) {
