@@ -27,7 +27,6 @@ import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.windowing.assigners.SlidingEventTimeWindows;
 import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.connectors.twitter.TwitterSource;
@@ -36,7 +35,7 @@ public class SecTweet {
     private static final String PARAM_FILE_KEY = "file-source";
     private static final int MAX_LATENESS_SECONDS = 60;
     private static final Time DEFAULT_RATE_INTERVAL = Time.minutes(15);
-    private static final Time DEFAULT_TREND_WINDOW_INTERVAL = Time.hours(1);
+    private static final int DEFAULT_WINDOW_SIZE = 3;
     private static final float TREND_EQUALITY_RANGE = 0.01f;
 
     void buildJobGraph(StreamExecutionEnvironment env, ParameterTool params) {
@@ -62,19 +61,23 @@ public class SecTweet {
 
         DataStream<TokenCount> tokens = tweets.flatMap(new TweetJsonMap());
         DataStream<TokenCount> tokenCountDataStream = countTokens(tokens, DEFAULT_RATE_INTERVAL);
-        DataStream<TokenTrend> trendsDataStream = getTrends(tokenCountDataStream, DEFAULT_TREND_WINDOW_INTERVAL, DEFAULT_RATE_INTERVAL);
+        DataStream<TokenTrend> trendsDataStream = getTrends(tokenCountDataStream, DEFAULT_WINDOW_SIZE);
 
         trendsDataStream.print();
     }
 
     DataStream<TokenCount> countTokens(DataStream<TokenCount> dataStream, Time windowSize) {
-        DataStream<TokenCount> tokenCountDataStream = dataStream.keyBy("token").window(TumblingEventTimeWindows.of(windowSize)).reduce(new TweetCountReducer());
+        DataStream<TokenCount> tokenCountDataStream = dataStream.keyBy("token")
+            .window(TumblingEventTimeWindows.of(windowSize))
+            .reduce(new TweetCountReducer());
         return tokenCountDataStream;
     }
 
-    DataStream<TokenTrend> getTrends(DataStream<TokenCount> dataStream, Time windowSize, Time windowSlide) {
-        SlidingEventTimeWindows trendWindow = SlidingEventTimeWindows.of(windowSize, windowSlide);
-        DataStream<TokenTrend> tokenTrendDataStream = dataStream.keyBy("token").window(trendWindow).aggregate(new TokenStateAggregator(TREND_EQUALITY_RANGE));
+    DataStream<TokenTrend> getTrends(DataStream<TokenCount> dataStream, int windowSize) {
+        DataStream<TokenTrend> tokenTrendDataStream = dataStream
+            .keyBy("token")
+            .countWindow(windowSize)
+            .aggregate(new TokenStateAggregator(TREND_EQUALITY_RANGE));
         return tokenTrendDataStream;
     }
 
