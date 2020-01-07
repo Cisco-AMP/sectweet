@@ -23,9 +23,12 @@
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 
+.idea/*
+.java-version
+
+# SecTweet
+docker/*/data/
 sec_tweet/gradlew.bat
 sec_tweet/build/*
 sec_tweet/.*
-
-.idea/*
-.java-version
+data/

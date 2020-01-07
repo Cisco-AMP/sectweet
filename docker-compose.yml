@@ -1,0 +1,45 @@
+version: "3"
+services:
+  flink-jm:
+    image: flink:${FLINK_TAG}
+    expose:
+      - "6123"
+    ports:
+      - "8082:8081"
+    command: jobmanager
+    environment:
+      - JOB_MANAGER_RPC_ADDRESS=flink-jm
+    volumes:
+      - ./sec_tweet/build/libs/:/opt/flink/sec_tweet/libs
+
+  flink-tm:
+    image: flink:${FLINK_TAG}
+    expose:
+      - "6121"
+      - "6122"
+    depends_on:
+      - flink-jm
+    command: taskmanager
+    links:
+      - flink-jm:flink-jm
+      - elasticsearch:elasticsearch
+    environment:
+      - JOB_MANAGER_RPC_ADDRESS=flink-jm
+    volumes:
+      - ./docker/flink/data:/opt/flink/sec_tweet/state
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:6.8.6
+    environment:
+      - discovery.type=single-node
+      - cluster.name=sectweet_docker_es
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - ./docker/elasticsearch/data:/usr/share/elasticsearch/data
+    ports:
+      - 9200:9200
