@@ -29,7 +29,23 @@ import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
 import org.apache.flink.streaming.api.windowing.time.Time;
+import org.apache.flink.streaming.connectors.elasticsearch.ActionRequestFailureHandler;
 import org.apache.flink.streaming.connectors.twitter.TwitterSource;
+import org.apache.flink.api.common.functions.RuntimeContext;
+import org.apache.flink.streaming.connectors.elasticsearch.ElasticsearchSinkFunction;
+import org.apache.flink.streaming.connectors.elasticsearch.RequestIndexer;
+import org.apache.flink.streaming.connectors.elasticsearch6.ElasticsearchSink;
+
+import org.apache.flink.util.ExceptionUtils;
+import org.apache.http.HttpHost;
+import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.client.Requests;
+import org.elasticsearch.common.util.concurrent.EsRejectedExecutionException;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class SecTweet {
     private static final String PARAM_FILE_KEY = "file-source";
@@ -37,6 +53,29 @@ public class SecTweet {
     private static final Time DEFAULT_RATE_INTERVAL = Time.minutes(15);
     private static final int DEFAULT_WINDOW_SIZE = 3;
     private static final float TREND_EQUALITY_RANGE = 0.01f;
+
+    void writeToES(DataStream<TokenTrend> trendDataStream) {
+        List<HttpHost> httpHosts = new ArrayList<>();
+        httpHosts.add(new HttpHost("127.0.0.1", 9200, "http"));
+
+        ElasticsearchSink.Builder<TokenTrend> esSinkBuilder = new ElasticsearchSink.Builder<>(
+            httpHosts,
+            (TokenTrend element, RuntimeContext ctx, RequestIndexer indexer) -> {
+                indexer.add(createIndexRequest(element));
+            });
+
+        esSinkBuilder.setFailureHandler((ActionRequestFailureHandler) (action, failure, restStatusCode, indexer) -> {
+            if (ExceptionUtils.findThrowable(failure, EsRejectedExecutionException.class).isPresent()) {
+                indexer.add(action);
+            } else {
+                throw failure;
+            }
+        });
+        // this instructs the sink to emit after every element, otherwise they would be buffered
+        esSinkBuilder.setBulkFlushMaxActions(1);
+        trendDataStream.addSink(esSinkBuilder.build());
+
+    }
 
     void buildJobGraph(StreamExecutionEnvironment env, ParameterTool params) {
         DataStreamSource<String> streamSource;
@@ -63,6 +102,7 @@ public class SecTweet {
         DataStream<TokenCount> tokenCountDataStream = countTokens(tokens, DEFAULT_RATE_INTERVAL);
         DataStream<TokenTrend> trendsDataStream = getTrends(tokenCountDataStream, DEFAULT_WINDOW_SIZE);
 
+        writeToES(trendsDataStream);
         trendsDataStream.print();
     }
 
@@ -94,5 +134,14 @@ public class SecTweet {
         secTweet.buildJobGraph(env, params);
 
         env.execute("Sectweet");
+    }
+
+    private static IndexRequest createIndexRequest(TokenTrend element) {
+        Map<String, Object> json = new HashMap<>();
+        json.put("data", element);
+
+        return Requests.indexRequest()
+            .index("sectweet")
+            .source(json);
     }
 }

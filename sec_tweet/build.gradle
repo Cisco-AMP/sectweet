@@ -69,6 +69,8 @@ dependencies {
     compile "org.apache.flink:flink-streaming-java_${scalaBinaryVersion}:${flinkVersion}"
     compile "org.apache.flink:flink-connector-twitter_${scalaBinaryVersion}:${flinkVersion}"
     compile "commons-logging:commons-logging:1.2"
+
+    compile "org.apache.flink:flink-connector-elasticsearch6_${scalaBinaryVersion}:${flinkVersion}"
     // --------------------------------------------------------------
     // Dependencies that should be part of the shadow jar, e.g.
     // connectors. These must be in the flinkShadowJar configuration!
