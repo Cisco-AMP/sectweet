@@ -14,10 +14,15 @@ public class ExtractTweet implements FlatMapFunction<String, Tweet> {
 
     @Override
     public void flatMap(String value, Collector<Tweet> out) {
+        // Ignore non JSON messages from the Twitter API
+        if (!value.startsWith("{")) {
+            return;
+        }
+
         if (jsonParser == null) {
             jsonParser = new ObjectMapper();
         }
-
+        
         try {
             JsonNode jsonNode = jsonParser.readValue(value, JsonNode.class);
             if (jsonNode.has("errors")) {

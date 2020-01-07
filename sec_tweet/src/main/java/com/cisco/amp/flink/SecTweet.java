@@ -54,13 +54,13 @@ public class SecTweet {
     private static final int DEFAULT_WINDOW_SIZE = 3;
     private static final float TREND_EQUALITY_RANGE = 0.01f;
 
-    void writeToES(DataStream<TokenTrend> trendDataStream) {
+    void writeToES(DataStream<TokenCount> tokenCountDataStream) {
         List<HttpHost> httpHosts = new ArrayList<>();
         httpHosts.add(new HttpHost("127.0.0.1", 9200, "http"));
 
-        ElasticsearchSink.Builder<TokenTrend> esSinkBuilder = new ElasticsearchSink.Builder<>(
+        ElasticsearchSink.Builder<TokenCount> esSinkBuilder = new ElasticsearchSink.Builder<>(
             httpHosts,
-            (TokenTrend element, RuntimeContext ctx, RequestIndexer indexer) -> {
+            (TokenCount element, RuntimeContext ctx, RequestIndexer indexer) -> {
                 indexer.add(createIndexRequest(element));
             });
 
@@ -73,8 +73,7 @@ public class SecTweet {
         });
         // this instructs the sink to emit after every element, otherwise they would be buffered
         esSinkBuilder.setBulkFlushMaxActions(1);
-        trendDataStream.addSink(esSinkBuilder.build());
-
+        tokenCountDataStream.addSink(esSinkBuilder.build());
     }
 
     void buildJobGraph(StreamExecutionEnvironment env, ParameterTool params) {
@@ -102,7 +101,7 @@ public class SecTweet {
         DataStream<TokenCount> tokenCountDataStream = countTokens(tokens, DEFAULT_RATE_INTERVAL);
         DataStream<TokenTrend> trendsDataStream = getTrends(tokenCountDataStream, DEFAULT_WINDOW_SIZE);
 
-        writeToES(trendsDataStream);
+        writeToES(tokenCountDataStream);
         trendsDataStream.print();
     }
 
@@ -136,12 +135,13 @@ public class SecTweet {
         env.execute("Sectweet");
     }
 
-    private static IndexRequest createIndexRequest(TokenTrend element) {
+    private static IndexRequest createIndexRequest(TokenCount element) {
         Map<String, Object> json = new HashMap<>();
-        json.put("data", element);
+        json.put("data", element.toString());
 
         return Requests.indexRequest()
             .index("sectweet")
-            .source(json);
+            .source(json)
+            .type("tokenCount");
     }
 }
