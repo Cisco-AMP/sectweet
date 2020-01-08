@@ -34,8 +34,6 @@ public class TokenTrend {
     }
 
     @Override
-    public String toString() {
-        return getToken() + ": " + getState();
-    }
+    public String toString() { return String.format("%s: %s", getToken(), getState()); }
 
 }

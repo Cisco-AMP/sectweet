@@ -28,7 +28,7 @@ public class TweetJsonMap implements FlatMapFunction<Tweet, TokenCount> {
             while (tokenizer.hasMoreTokens()) {
                 String token = tokenizer.nextToken().toLowerCase();
                 if (isInterestingToken(token) && isShaOrUri(token)) {
-                    out.collect(new TokenCount(token, 1));
+                    out.collect(new TokenCount(token, 1, tweet.getTimestamp()));
                 }
             }
         } catch (Exception exception) {

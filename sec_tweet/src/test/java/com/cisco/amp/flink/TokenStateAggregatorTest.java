@@ -15,7 +15,7 @@ public class TokenStateAggregatorTest {
         tokenTrendAccumulator.setCount(6);
         tokenTrendAccumulator.setLastCount(3);
 
-        TokenCount tokenCount = new TokenCount("token", 5);
+        TokenCount tokenCount = new TokenCount("token", 5, 10000);
         TokenStateAggregator agg = new TokenStateAggregator(0.0001f);
         TokenTrendAccumulator result = agg.add(tokenCount, tokenTrendAccumulator);
 
@@ -33,7 +33,7 @@ public class TokenStateAggregatorTest {
         tokenTrendAccumulator.setCount(6);
         tokenTrendAccumulator.setLastCount(3);
         TokenStateAggregator agg = new TokenStateAggregator(0.0001f);
-        assertEquals(TokenTrend.State.NO_CHANGE, agg.getResult(tokenTrendAccumulator));
+        assertEquals(TokenTrend.State.NO_CHANGE, agg.getResult(tokenTrendAccumulator).getState());
     }
 
     @org.junit.Test
@@ -44,7 +44,7 @@ public class TokenStateAggregatorTest {
         tokenTrendAccumulator.setCount(7);
         tokenTrendAccumulator.setLastCount(3);
         TokenStateAggregator agg = new TokenStateAggregator(0.143f);
-        assertEquals(TokenTrend.State.NO_CHANGE, agg.getResult(tokenTrendAccumulator));
+        assertEquals(TokenTrend.State.NO_CHANGE, agg.getResult(tokenTrendAccumulator).getState());
     }
 
     @org.junit.Test
@@ -55,7 +55,7 @@ public class TokenStateAggregatorTest {
         tokenTrendAccumulator.setCount(6);
         tokenTrendAccumulator.setLastCount(2);
         TokenStateAggregator agg = new TokenStateAggregator(0.0001f);
-        assertEquals(TokenTrend.State.DECREASING, agg.getResult(tokenTrendAccumulator));
+        assertEquals(TokenTrend.State.DECREASING, agg.getResult(tokenTrendAccumulator).getState());
     }
 
     @org.junit.Test
@@ -66,7 +66,7 @@ public class TokenStateAggregatorTest {
         tokenTrendAccumulator.setCount(6);
         tokenTrendAccumulator.setLastCount(4);
         TokenStateAggregator agg = new TokenStateAggregator(0.0001f);
-        assertEquals(TokenTrend.State.INCREASING, agg.getResult(tokenTrendAccumulator));
+        assertEquals(TokenTrend.State.INCREASING, agg.getResult(tokenTrendAccumulator).getState());
     }
 
     @org.junit.Test

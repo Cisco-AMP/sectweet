@@ -27,12 +27,12 @@ import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.timestamps.AscendingTimestampExtractor;
 import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.connectors.elasticsearch.ActionRequestFailureHandler;
 import org.apache.flink.streaming.connectors.twitter.TwitterSource;
 import org.apache.flink.api.common.functions.RuntimeContext;
-import org.apache.flink.streaming.connectors.elasticsearch.ElasticsearchSinkFunction;
 import org.apache.flink.streaming.connectors.elasticsearch.RequestIndexer;
 import org.apache.flink.streaming.connectors.elasticsearch6.ElasticsearchSink;
 
@@ -42,10 +42,7 @@ import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.client.Requests;
 import org.elasticsearch.common.util.concurrent.EsRejectedExecutionException;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class SecTweet {
     private static final String PARAM_FILE_KEY = "file-source";
@@ -98,7 +95,12 @@ public class SecTweet {
             .flatMap(new ExtractTweet())
             .assignTimestampsAndWatermarks(new TweetTimestampExtractor(Time.seconds(MAX_LATENESS_SECONDS)));
 
-        DataStream<TokenCount> tokens = tweets.flatMap(new TweetJsonMap());
+        DataStream<TokenCount> tokens = tweets
+                .flatMap(new TweetJsonMap())
+                .assignTimestampsAndWatermarks(new AscendingTimestampExtractor<TokenCount>() {
+                    @Override
+                    public long extractAscendingTimestamp(TokenCount element) { return element.getTimestamp(); }
+                });
         DataStream<TokenCount> tokenCountDataStream = countTokens(tokens, DEFAULT_RATE_INTERVAL);
         DataStream<TokenTrend> trendsDataStream = getTrends(tokenCountDataStream, DEFAULT_TREND_WINDOW_SIZE, DEFAULT_TREND_WINDOW_SLIDE);
 
@@ -138,7 +140,9 @@ public class SecTweet {
 
     private static IndexRequest createIndexRequest(TokenCount element) {
         Map<String, Object> json = new HashMap<>();
-        json.put("data", element.toString());
+        json.put("token", element.getToken());
+        json.put("count", element.getCount());
+        json.put("timestamp", new Date(element.getTimestamp()));
 
         return Requests.indexRequest()
             .index("sectweet")
