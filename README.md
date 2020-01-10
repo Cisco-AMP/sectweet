@@ -1,9 +1,14 @@
 # SecTweet
 SecTweet is a Flink job that streams Twitter posts.  Relevent text containing shas, file paths, etc, are aggregated 
-and trends are determined based on the frequency of these terms over time.
+and trends are determined based on the frequency of these terms over time.  
+  
+For the Flink workshop, please follow the steps [here](https://github.com/Cisco-AMP/sectweet/wiki/Workshop) instead.
 
-## Setup
-Services required: Flink, Elasticsearch   
+## Requirements
+Java 8
+
+## Services Setup
+Services: Flink, Elasticsearch (Optional)
   
 To start all containers:  
 ``` runDockerContainers.sh ```  
