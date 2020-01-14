@@ -16,7 +16,7 @@ import java.util.regex.Matcher;
 public class TweetJsonMap implements FlatMapFunction<Tweet, TokenCount> {
     private static final Logger LOGGER = LoggerFactory.getLogger(TweetJsonMap.class);
     private static final int MIN_TOKEN_LENGTH = 5;
-    private static final Pattern interestingPattern = Pattern.compile("[a-f0-9]{64}|.*(app.any.run|virustotal.com|github.com)\\/.*|^[a-z]:(\\\\|\\/\\/).*\\w+$|^\\/(\\w+\\/)+.*$");
+    private static final Pattern INTERESTING_PATTERN = Pattern.compile("[a-f0-9]{64}|.*(app.any.run|virustotal.com|github.com)\\/.*|^[a-z]:(\\\\|\\/\\/).*\\w+$|^(?!\\/u\\/.*)\\/(\\w+\\/)+.*$");
     private static final List<Character> IGNORE_PREFIX = Arrays.asList(new Character[]{'#', '@'});
 
     @Override
@@ -42,7 +42,7 @@ public class TweetJsonMap implements FlatMapFunction<Tweet, TokenCount> {
     }
 
     private boolean isShaOrUri(String token) {
-        Matcher interestingMatcher = interestingPattern.matcher(token);
+        Matcher interestingMatcher = INTERESTING_PATTERN.matcher(token);
         return interestingMatcher.matches();
     }
 }
