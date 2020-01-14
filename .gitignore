@@ -1,6 +1,6 @@
 # Compiled class file
 *.class
-*/out
+out/
 
 # Log file
 *.log
@@ -16,4 +16,5 @@ docker/*/data/
 gradlew.bat
 build/*
 .gradle/
-data/
+data/*
+!data/*.gz
