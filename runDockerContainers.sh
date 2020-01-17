@@ -9,3 +9,6 @@ docker-compose up -d flink-tm
 
 echo "Starting ElasticSearch. See http://localhost:9200/_cluster/health?pretty"
 docker-compose up -d elasticsearch
+
+echo "Starting Kibana. See http://localhost:5601"
+docker-compose up -d kibana
