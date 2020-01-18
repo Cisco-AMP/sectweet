@@ -46,7 +46,6 @@ import java.util.*;
 
 public class SecTweet {
     private static final String PARAM_FILE_KEY = "file-source";
-    private static final String PARAM_USE_ES = "use-es";
     private static final int MAX_LATENESS_SECONDS = 60;
     private static final Time DEFAULT_RATE_INTERVAL = Time.minutes(15);
     private static final int DEFAULT_TREND_WINDOW_SIZE = 5;
@@ -105,9 +104,7 @@ public class SecTweet {
         DataStream<TokenCount> tokenCountDataStream = countTokens(tokens, DEFAULT_RATE_INTERVAL);
         DataStream<TokenTrend> trendsDataStream = getTrends(tokenCountDataStream, DEFAULT_TREND_WINDOW_SIZE, DEFAULT_TREND_WINDOW_SLIDE);
 
-        if (params.has(PARAM_USE_ES)) {
-            writeToES(tokenCountDataStream);
-        }
+        writeToES(tokenCountDataStream);
         trendsDataStream.print();
     }
 
