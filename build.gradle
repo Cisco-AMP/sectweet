@@ -85,6 +85,7 @@ dependencies {
     testCompile "org.apache.flink:flink-test-utils_${scalaBinaryVersion}:${flinkVersion}"
     testCompile "org.apache.flink:flink-runtime_${scalaBinaryVersion}:${flinkVersion}"
     testCompile "org.apache.flink:flink-streaming-java_${scalaBinaryVersion}:${flinkVersion}"
+    testCompile "org.mockito:mockito-core:3.2.4"
 }
 
 // make compileOnly dependencies available for tests:

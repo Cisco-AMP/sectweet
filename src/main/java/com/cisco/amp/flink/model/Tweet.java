@@ -23,7 +23,7 @@ public class Tweet {
         this.body = body;
     }
 
-    public long getTimestamp() {
+    public Long getTimestamp() {
         return timestamp;
     }
 
@@ -34,5 +34,31 @@ public class Tweet {
     private static long getTimestamp(String timeString) {
         OffsetDateTime odtInstanceAtOffset = OffsetDateTime.parse(timeString, DATE_TIME_FORMATTER);
         return odtInstanceAtOffset.toInstant().getEpochSecond() * 1000;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (other == this) {
+            return true;
+        }
+
+        if (!(other instanceof Tweet)) {
+            return false;
+        }
+
+        Tweet otherTweet = (Tweet) other;
+        return otherTweet.getTimestamp() == this.timestamp
+            && otherTweet.getBody().equals(this.getBody());
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result
+            + ((getBody() == null) ? 0 : getBody().hashCode());
+        result = prime * result
+            + ((getTimestamp() == null) ? 0 : getTimestamp().hashCode());
+        return result;
     }
 }
