@@ -10,12 +10,12 @@ For the Flink workshop, please follow the steps [here](https://github.com/Cisco-
 Java 8
 
 ## Services Setup
-Services: Flink, Elasticsearch (Optional)
+Services: Flink, Elasticsearch Kibana (Optional)
   
 To start all containers:  
 ``` runDockerContainers.sh ```  
 To start a specific container:  
-``` docker-compose up <flink-jm | flink-tm | elasticsearch> ```
+``` docker-compose up <flink-jm | flink-tm | elasticsearch | kibana> ```
 
 ## Build
 To build the project:  
