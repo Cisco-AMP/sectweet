@@ -46,6 +46,7 @@ import java.util.*;
 
 public class SecTweet {
     private static final String PARAM_FILE_KEY = "file-source";
+    private static final String WRITE_ES_KEY = "write-es";
     private static final int MAX_LATENESS_SECONDS = 60;
     private static final Time DEFAULT_RATE_INTERVAL = Time.minutes(15);
     private static final int DEFAULT_TREND_WINDOW_SIZE = 5;
@@ -58,9 +59,7 @@ public class SecTweet {
 
         ElasticsearchSink.Builder<TokenCount> esSinkBuilder = new ElasticsearchSink.Builder<>(
             httpHosts,
-            (TokenCount element, RuntimeContext ctx, RequestIndexer indexer) -> {
-                indexer.add(createIndexRequest(element));
-            });
+            (TokenCount element, RuntimeContext ctx, RequestIndexer indexer) -> indexer.add(createIndexRequest(element)));
 
         esSinkBuilder.setFailureHandler((ActionRequestFailureHandler) (action, failure, restStatusCode, indexer) -> {
             if (ExceptionUtils.findThrowable(failure, EsRejectedExecutionException.class).isPresent()) {
@@ -104,8 +103,11 @@ public class SecTweet {
         DataStream<TokenCount> tokenCountDataStream = countTokens(tokens, DEFAULT_RATE_INTERVAL);
         DataStream<TokenTrend> trendsDataStream = getTrends(tokenCountDataStream, DEFAULT_TREND_WINDOW_SIZE, DEFAULT_TREND_WINDOW_SLIDE);
 
-        writeToES(tokenCountDataStream);
         trendsDataStream.print();
+
+        if (params.has(WRITE_ES_KEY)) {
+            writeToES(tokenCountDataStream);
+        }
     }
 
     DataStream<TokenCount> countTokens(DataStream<TokenCount> dataStream, Time windowSize) {
