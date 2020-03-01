@@ -1,4 +1,4 @@
-package com.cisco.amp.flink;
+package com.cisco.amp.flink.operators;
 
 import com.cisco.amp.flink.model.TokenCount;
 import com.cisco.amp.flink.model.Tweet;
@@ -27,7 +27,7 @@ public class TweetJsonMap implements FlatMapFunction<Tweet, TokenCount> {
             // split the message
             while (tokenizer.hasMoreTokens()) {
                 String token = tokenizer.nextToken().toLowerCase();
-                if (isInterestingToken(token) && isShaOrUri(token)) {
+                if (isInterestingToken(token) && isShaOrUri(token) && !isReddit(token)) {
                     out.collect(new TokenCount(token, 1, tweet.getTimestamp()));
                 }
             }
@@ -36,13 +36,17 @@ public class TweetJsonMap implements FlatMapFunction<Tweet, TokenCount> {
         }
     }
 
-    private boolean isInterestingToken(String token) {
+    boolean isInterestingToken(String token) {
         return token.length() >= MIN_TOKEN_LENGTH
             && !IGNORE_PREFIX.contains(token.charAt(0));
     }
 
-    private boolean isShaOrUri(String token) {
+    boolean isShaOrUri(String token) {
         Matcher interestingMatcher = INTERESTING_PATTERN.matcher(token);
         return interestingMatcher.matches();
+    }
+
+    boolean isReddit(String token) {
+        return token.startsWith("/r/") && token.lastIndexOf("/") == 2;
     }
 }

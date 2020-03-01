@@ -1,8 +1,9 @@
-package com.cisco.amp.flink;
+package com.cisco.amp.flink.operators;
 
 import com.cisco.amp.flink.model.TokenCount;
 import com.cisco.amp.flink.model.TokenTrend;
 import com.cisco.amp.flink.model.TokenTrendAccumulator;
+import com.cisco.amp.flink.operators.TokenStateAggregator;
 
 import static org.junit.Assert.*;
 
