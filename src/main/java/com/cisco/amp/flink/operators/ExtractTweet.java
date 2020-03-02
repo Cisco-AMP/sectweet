@@ -1,4 +1,4 @@
-package com.cisco.amp.flink;
+package com.cisco.amp.flink.operators;
 
 import com.cisco.amp.flink.model.Tweet;
 import org.apache.flink.api.common.functions.FlatMapFunction;
