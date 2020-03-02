@@ -97,7 +97,7 @@ public class SecTweet {
         // Get the token rate
         DataStream<TokenCount> tokenCountDataStream = countTokens(tokens, DEFAULT_RATE_INTERVAL);
 
-        // Optional: Write to ES for visualization
+        // Optional: Write token rates to ES
         if (params.has(PARAM_WRITE_ES_KEY)) {
             writeToES(tokenCountDataStream);
         }
