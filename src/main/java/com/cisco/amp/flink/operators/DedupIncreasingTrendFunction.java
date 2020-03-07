@@ -10,6 +10,10 @@ import org.apache.flink.api.common.typeinfo.TypeHint;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.configuration.Configuration;
 
+/**
+ * DedupIncreasingTrendFunction filters out all non-increasing trends and
+ * limits the outgoing TokenTrend from being repeated more than once per day.
+ */
 public class DedupIncreasingTrendFunction extends RichFilterFunction<TokenTrend> {
     private transient MapState<String, Boolean> dedup;
 
@@ -17,7 +21,6 @@ public class DedupIncreasingTrendFunction extends RichFilterFunction<TokenTrend>
     public void open(Configuration parameters) {
         StateTtlConfig ttlConfig = StateTtlConfig
             .newBuilder(Time.days(1))
-            .cleanupInRocksdbCompactFilter(1000)
             .setUpdateType(StateTtlConfig.UpdateType.OnCreateAndWrite)
             .setStateVisibility(StateTtlConfig.StateVisibility.NeverReturnExpired)
             .build();
