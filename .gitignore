@@ -18,3 +18,4 @@ build/*
 .gradle/
 data/*
 !data/*.gz
+runScript.sh

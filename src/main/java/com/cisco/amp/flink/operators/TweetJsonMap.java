@@ -17,7 +17,7 @@ public class TweetJsonMap implements FlatMapFunction<Tweet, TokenCount> {
     private static final Logger LOGGER = LoggerFactory.getLogger(TweetJsonMap.class);
     private static final int MIN_TOKEN_LENGTH = 5;
     private static final Pattern INTERESTING_PATTERN = Pattern.compile("[a-f0-9]{64}|.*(app.any.run|virustotal.com|github.com)\\/.*|^[a-z]:(\\\\|\\/\\/).*\\w+$|^(?!\\/u\\/.*)\\/(\\w+\\/)+.*$");
-    private static final List<Character> IGNORE_PREFIX = Arrays.asList(new Character[]{'#', '@'});
+    private static final List<Character> IGNORE_PREFIX = Arrays.asList('#', '@');
 
     @Override
     public void flatMap(Tweet tweet, Collector<TokenCount> out) {

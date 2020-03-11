@@ -42,6 +42,7 @@ import org.apache.http.HttpHost;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.client.Requests;
 import org.elasticsearch.common.util.concurrent.EsRejectedExecutionException;
+import twitter4j.TwitterException;
 
 import java.util.*;
 
@@ -49,8 +50,8 @@ public class SecTweet {
     private static final String PARAM_FILE_KEY = "file-source";
     private static final String PARAM_WRITE_ES_KEY = "write-es";
     private static final String PARAM_WRITE_TWITTER_KEY = "write-twitter";
-    private static final String PARAM_TWITTER_SOURCE_IDS_KEY = "twitter-source-ids";
-    private static final String PARAM_TWITTER_SOURCE_TERMS_KEY = "twitter-source-terms";
+    public static final String PARAM_TWITTER_SOURCE_IDS_KEY = "twitter-source-ids";
+    public static final String PARAM_TWITTER_SOURCE_TERMS_KEY = "twitter-source-terms";
 
     private static final int MAX_LATENESS_SECONDS = 60;
     private static final Time DEFAULT_RATE_INTERVAL = Time.hours(1);
@@ -58,7 +59,7 @@ public class SecTweet {
     private static final int DEFAULT_TREND_WINDOW_SLIDE = 1;
     private static final float TREND_EQUALITY_RANGE = 0.01f;
 
-    void buildJobGraph(StreamExecutionEnvironment env, ParameterTool params) {
+    void buildJobGraph(StreamExecutionEnvironment env, ParameterTool params) throws TwitterException {
         DataStreamSource<String> streamSource;
 
         if (params.has(PARAM_FILE_KEY)) {
@@ -72,17 +73,9 @@ public class SecTweet {
                     + "twitter-source.token <token> --twitter-source.tokenSecret <tokenSecret>");
                 return;
             }
-            List<Long> twitterIds = new ArrayList<>();
-            for (String id : params.get(PARAM_TWITTER_SOURCE_IDS_KEY).split(",")) {
-                twitterIds.add(Long.parseLong(id.trim()));
-            }
-            List<String> twitterTerms = new ArrayList<>();
-            for (String term : params.get(PARAM_TWITTER_SOURCE_TERMS_KEY).split(",")) {
-                twitterTerms.add(term.trim());
-            }
 
             TwitterSource twitterSource = new TwitterSource(params.getProperties());
-            twitterSource.setCustomEndpointInitializer(new SecurityEndpointInitializer(twitterIds, twitterTerms));
+            twitterSource.setCustomEndpointInitializer(new SecurityEndpointInitializer(params));
             streamSource = env.addSource(twitterSource);
         }
 
@@ -105,12 +98,10 @@ public class SecTweet {
         // Optional: Write to Twitter for increasing trends
         DataStream<TokenTrend> trendsDataStream = getTrends(tokenCountDataStream, DEFAULT_TREND_WINDOW_SIZE, DEFAULT_TREND_WINDOW_SLIDE);
 
+        trendsDataStream.print();
+
         if (params.has(PARAM_WRITE_TWITTER_KEY)) {
             writeToTwitter(params, trendsDataStream);
-        } else {
-            trendsDataStream
-            .filter((FilterFunction<TokenTrend>) value -> value.getState() == TokenTrend.State.INCREASING)
-            .print();
         }
     }
 
@@ -143,22 +134,20 @@ public class SecTweet {
     }
 
     DataStream<TokenCount> countTokens(DataStream<TokenCount> dataStream, Time windowSize) {
-        DataStream<TokenCount> tokenCountDataStream = dataStream.keyBy("token")
+        return dataStream.keyBy("token")
             .window(TumblingEventTimeWindows.of(windowSize))
             .reduce(new TweetCountReducer())
             .name("Token Rates")
             .uid("token_rates");
-        return tokenCountDataStream;
     }
 
     DataStream<TokenTrend> getTrends(DataStream<TokenCount> dataStream, int windowSize, int windowSlide) {
-        DataStream<TokenTrend> tokenTrendDataStream = dataStream
+        return dataStream
             .keyBy("token")
             .countWindow(windowSize, windowSlide)
             .aggregate(new TokenStateAggregator(TREND_EQUALITY_RANGE))
             .name("Evaluate Trends")
             .uid("evaluate_trends");
-        return tokenTrendDataStream;
     }
 
     public static void main(String[] args) throws Exception {
