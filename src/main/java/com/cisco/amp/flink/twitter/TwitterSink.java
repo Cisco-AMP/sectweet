@@ -33,6 +33,6 @@ public class TwitterSink extends RichSinkFunction<TokenTrend> {
     }
 
     String getStatusString(TokenTrend value) {
-        return "Potentially trending #malware token: " + value.getToken();
+        return "Potential trending #malware token: " + value.getToken();
     }
 }

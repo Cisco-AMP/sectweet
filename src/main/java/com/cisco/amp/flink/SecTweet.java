@@ -98,12 +98,10 @@ public class SecTweet {
         // Optional: Write to Twitter for increasing trends
         DataStream<TokenTrend> trendsDataStream = getTrends(tokenCountDataStream, DEFAULT_TREND_WINDOW_SIZE, DEFAULT_TREND_WINDOW_SLIDE);
 
+        trendsDataStream.print();
+
         if (params.has(PARAM_WRITE_TWITTER_KEY)) {
             writeToTwitter(params, trendsDataStream);
-        } else {
-            trendsDataStream
-            .filter((FilterFunction<TokenTrend>) value -> value.getState() == TokenTrend.State.INCREASING)
-            .print();
         }
     }
 
